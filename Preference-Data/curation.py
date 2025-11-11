@@ -1,3 +1,7 @@
+# curation code for preference data using GPT5 to judge the preferred response,
+# then rewrite preferred response to better reflect Kantian reasoning
+# short-circuits to not perform rewrite if input is judged by GPT5 as non-ethical
+
 import json
 import os
 from itertools import islice
@@ -17,24 +21,15 @@ principles_file = Path("PDPrinciples.jsonl")
 out_file = Path("curated.jsonl")
 
 principles = []
-principle_names = []  # MUST be a list, not a set
+principle_names = []
 with open(principles_file, "r", encoding="utf-8") as pf:
     for line in pf:
         rec = json.loads(line)
         principles.append({"name": rec["principle"], "text": rec["text"]})
         principle_names.append(rec["principle"])
 
-# if you previously had a set anywhere, normalize here
 principle_names = list(principle_names)
 principles = list(principles)
-
-SYSTEM_JUDGE = (
-        "You are a Kantian ethics judge.\n"
-        "1) Decide if the prompt is ethical in nature.\n"
-        "   - If NOT ethical: pick the more benign, clear, helpful candidate; no moral tone.\n"
-        "2) If ethical: choose the better candidate by the most applicable principle(s) from provided list (return names only).\n"
-        "Return JSON per schema; no rewrite in this call."
-    )
 
 JUDGE_SCHEMA = {
   "type":"object","additionalProperties":False,"required":["ethical","choice","principle","note"],
